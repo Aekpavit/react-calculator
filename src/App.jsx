@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="app">
       <h1>   
-        เครื่องคิดเลข
+        calculator
       </h1>
       <Calculator />
     </div>
