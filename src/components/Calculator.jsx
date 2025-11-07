@@ -19,12 +19,9 @@ export default function Calculator() {
       setInput(input + value);
     }
   };
-
-  // เพิ่ม event listener สำหรับ keyboard
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key;
-      // ถ้าเป็นตัวเลข, +, -, *, /, ., %
       if (/[0-9+\-*/.%]/.test(key)) {
         const value = key === "*" ? "x" : key === "/" ? "÷" : key;
         setInput(prev => prev + value);
