@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Calculator.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackspace } from "@fortawesome/free-solid-svg-icons";
+import { faBackspace, faSync } from "@fortawesome/free-solid-svg-icons";
 
-// ย้าย helpers ออกมานอก component หรือจะ wrap ด้วย useCallback ก็ได้
-// วิธีนี้จะทำให้ไม่ต้องสร้างฟังก์ชันเหล่านี้ใหม่ทุกครั้งที่ component re-render
+// --- Helpers ---
 const formatNumber = (str) => {
+  if (typeof str !== 'string') return ""; // ป้องกัน error ถ้า str ไม่ใช่ string
   return str.replace(/\d+(\.\d+)?/g, (num) => {
     const [intPart, decPart] = num.split(".");
     const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -13,8 +13,12 @@ const formatNumber = (str) => {
   });
 };
 
-const unformatNumber = (str) => str.replace(/,/g, "");
+const unformatNumber = (str) => {
+  if (typeof str !== 'string') return "";
+  return str.replace(/,/g, "");
+};
 
+// --- Component ---
 export default function Calculator() {
   const [input, setInput] = useState("0");
   const [history, setHistory] = useState([]);
@@ -26,25 +30,28 @@ export default function Calculator() {
       let expression = unformatNumber(expr)
         .replace(/x/g, "*")
         .replace(/÷/g, "/")
-        .replace(/%/g, "/100"); // แก้ % ให้ถูกต้อง
+        .replace(/%/g, "/100");
       expression = expression.replace(/\b0+(\d)/g, "$1");
-      
-      // ป้องกันการ eval expression ที่ว่างเปล่าหรือมีปัญหา
-      if (!expression || /[+\-*/]$/.test(expression)) {
-         return eval(expression.slice(0, -1));
+
+      if (!expression) return 0; // ถ้า expression ว่างเปล่า
+
+      // ถ้าตัวสุดท้ายเป็น operator ให้คำนวณตัวก่อนหน้า
+      if (/[+\-*/]$/.test(expression)) {
+        return eval(expression.slice(0, -1));
       }
-      
+
       return eval(expression);
     } catch {
       return null;
     }
-  }, []); // calculate ไม่มี dependency ภายใน component
+  }, []);
 
   const handleClick = useCallback((value) => {
     if (value === "=") {
       const result = calculate(input);
       if (result !== null) {
-        setInput(formatNumber(result.toString()));
+        const resultString = result.toString();
+        setInput(formatNumber(resultString));
         setHistory((prev) => [input, ...prev].slice(0, 2));
       } else {
         alert("Error");
@@ -64,58 +71,113 @@ export default function Calculator() {
       });
       setJustCalculated(false);
     } else {
+      // --- Logic สำหรับการพิมพ์ ---
       setInput((prev) => {
         let cleanPrev = unformatNumber(prev);
         let newVal = cleanPrev;
 
-        if (justCalculated && /[+\-x÷]/.test(value)) {
+        // Case 1: เพิ่งกด = ไป
+        if (justCalculated) {
           setJustCalculated(false);
-          newVal = cleanPrev + value;
-        } else if (justCalculated && /[0-9]/.test(value)) {
-          setJustCalculated(false);
-          newVal = value;
-        } else {
-          if (cleanPrev === "0" && /[0-9]/.test(value)) newVal = value;
-          else newVal = cleanPrev + value;
-        }
+          if (/[+\-x÷]/.test(value)) {
+            newVal = cleanPrev + value; // เริ่มการคำนวณใหม่จากผลลัพธ์เดิม
+          } else if (/[0-9]/.test(value)) {
+            newVal = value; // เริ่มต้นใหม่ทั้งหมด
+          } else if (value === '.') {
+             newVal = "0."; // เริ่มต้นใหม่ด้วย 0.
+          } else {
+            newVal = cleanPrev; // ป้องกันการกดปุ่มอื่น
+          }
+        } 
+        
+        // Case 2: พิมพ์ต่อตามปกติ
+        else {
+          const replaceableOperators = /[+\-x÷]/;
+          const lastChar = cleanPrev.slice(-1);
 
+          // 2.1: ผู้ใช้กดเครื่องหมาย (+, -, x, ÷)
+          if (replaceableOperators.test(value)) {
+            if (replaceableOperators.test(lastChar)) {
+              // ถ้าตัวสุดท้ายเป็นเครื่องหมายอยู่แล้ว -> ให้แทนที่
+              newVal = cleanPrev.slice(0, -1) + value;
+            } else {
+              // ถ้าตัวสุดท้ายไม่ใช่เครื่องหมาย -> ให้เพิ่มเข้าไป
+              newVal = cleanPrev + value;
+            }
+          } 
+          
+          // 2.2: ผู้ใช้กดจุด (.)
+          else if (value === '.') {
+            // แบ่ง string ด้วยเครื่องหมาย เพื่อหา "ก้อนตัวเลข" สุดท้าย
+            const segments = cleanPrev.split(replaceableOperators);
+            const lastSegment = segments.pop() || "";
+            
+            if (!lastSegment.includes('.')) {
+              // ถ้าก้อนตัวเลขสุดท้ายยังไม่มีจุด -> ให้เพิ่มจุด
+              newVal = cleanPrev + value;
+            }
+            // ถ้ามีจุดอยู่แล้ว ก็ไม่ต้องทำอะไร
+          }
+
+          // 2.3: ผู้ใช้กดตัวเลข
+          else if (/[0-9]/.test(value)) {
+            if (cleanPrev === "0") {
+              newVal = value; // แทนที่ "0" เริ่มต้น
+            } else {
+              newVal = cleanPrev + value; // ต่อตัวเลข
+            }
+          }
+
+          // 2.4: ผู้ใช้กด %
+          else if (value === '%') {
+            // ป้องกันการใส่ % ต่อจากเครื่องหมาย (เช่น 5+%)
+            if (!replaceableOperators.test(lastChar) && cleanPrev !== "0") {
+              newVal = cleanPrev + value;
+            }
+          }
+        }
+        
         return formatNumber(newVal);
       });
-      // ไม่ต้อง setJustCalculated(false) ที่นี่ เพราะมันถูกจัดการในเงื่อนไขข้างบนแล้ว
+      
+      // ถ้าเพิ่งกด = แล้วพิมพ์ตัวเลข/จุด ให้ reset justCalculated
+      if (justCalculated && (/[0-9]/.test(value) || value === '.')) {
+          setJustCalculated(false);
+      }
     }
-  }, [calculate, input, justCalculated]); // ระบุ dependencies ที่ handleClick ใช้
+  }, [calculate, input, justCalculated]);
 
+  // Effect สำหรับอัปเดต Preview
   useEffect(() => {
     if (input && input !== "0") {
       const clean = unformatNumber(input);
       let exprToCalc = clean;
-      
-      // ถ้าตัวสุดท้ายเป็น operator ให้คำนวณตัวก่อนหน้า
+
       if (/[+\-x÷%]$/.test(clean)) {
         exprToCalc = clean.slice(0, -1);
       }
 
-      // ถ้า exprToCalc ว่างเปล่า (เช่น กด "dl" จนหมด) ก็ไม่ต้อง preview
-      if(exprToCalc === "") {
+      if (exprToCalc === "" || exprToCalc === input) {
         setPreview("");
         return;
       }
 
       const result = calculate(exprToCalc);
       if (result !== null && formatNumber(result.toString()) !== input) {
-         setPreview(formatNumber(result.toString()));
+        setPreview(formatNumber(result.toString()));
       } else {
-         setPreview("");
+        setPreview("");
       }
     } else {
       setPreview("");
     }
-  }, [input, calculate]); // เพิ่ม calculate ใน dependency
+  }, [input, calculate]);
 
+  // Effect สำหรับ Keyboard Input
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key;
-      
+
       if (/[0-9]/.test(key)) {
         e.preventDefault();
         handleClick(key);
@@ -128,8 +190,8 @@ export default function Calculator() {
       } else if (/[\+\-\.%]/.test(key)) {
         e.preventDefault();
         handleClick(key);
-      } else if (key === "Enter" || key === "=") { // รองรับทั้ง Enter และ =
-        e.preventDefault(); 
+      } else if (key === "Enter" || key === "=") {
+        e.preventDefault();
         handleClick("=");
       } else if (key === "Backspace") {
         e.preventDefault();
@@ -142,7 +204,7 @@ export default function Calculator() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClick]); // <--- จุดสำคัญ: เพิ่ม handleClick เข้าไปใน dependency array
+  }, [handleClick]); // <-- Dependency ที่ถูกต้อง
 
   const buttons = [
     "C", "dl", "%", "÷",
@@ -163,7 +225,10 @@ export default function Calculator() {
       <input type="text" value={input} readOnly />
 
       {preview && (
-        <div className="preview" onClick={() => setInput(preview)}>
+        <div className="preview" onClick={() => {
+          setInput(preview);
+          setPreview("");
+        }}>
           = {preview}
         </div>
       )}
@@ -179,7 +244,13 @@ export default function Calculator() {
 
           return (
             <button key={btn} className={btnClass} onClick={() => handleClick(btn)}>
-              {btn === "dl" ? <FontAwesomeIcon icon={faBackspace} /> : btn}
+              {btn === "dl" ? (
+                <FontAwesomeIcon icon={faBackspace} />
+              ) : btn === "↻" ? (
+                <FontAwesomeIcon icon={faSync} />
+              ) : (
+                btn
+              )}
             </button>
           );
         })}

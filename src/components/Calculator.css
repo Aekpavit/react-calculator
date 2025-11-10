@@ -6,9 +6,9 @@
 
 .calculator {
   width: 342px;        /* 285 * 1.2 */
-  height: 600px;       /* 500 * 1.2 */
+  height: 650px;       /* 500 * 1.2 */
   margin: 0 auto;
-  border-radius: 56.4px; /* 47 * 1.2 */
+  border-radius: 39px; /* 47 * 1.2 */
   padding: 24px;         /* 20 * 1.2 */
   background: #000000;
   display: flex;
@@ -26,9 +26,11 @@
   margin-bottom: 12px;   /* 10 * 1.2 */
 }
 
+
+
 .history-item {
   font-size: 14.4px;     /* 12 * 1.2 */
-  color: #4d4d4d;
+  color: #383636;
   margin: 2.4px 0;       /* 2 * 1.2 */
   text-align: right;
   width: 100%;
@@ -36,6 +38,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.history-item:hover {
+  color: #4c4c4c;
+  font-size: 14.9px
+}
+
 
 input {
   height: 60px;          /* 50 * 1.2 */
@@ -53,7 +60,7 @@ input {
 
 .preview {
   background-color: #000000;
-  font-size: 21.6px;     /* 18 * 1.2 */
+  font-size: 16.6px;     /* 18 * 1.2 */
   text-align: right;
   color: #484848;
   width: 100%;
@@ -62,7 +69,7 @@ input {
   white-space: nowrap;
   text-overflow: ellipsis;
   cursor: pointer;
-  margin-bottom: 6px;    /* 5 * 1.2 */
+  margin-bottom: -11px;    /* 5 * 1.2 */
 }
 
 .preview:hover {
