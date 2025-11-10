@@ -5,7 +5,7 @@ import { faBackspace, faSync } from "@fortawesome/free-solid-svg-icons";
 
 // --- Helpers ---
 const formatNumber = (str) => {
-  if (typeof str !== 'string') return ""; // ป้องกัน error ถ้า str ไม่ใช่ string
+  if (typeof str !== 'string') return "";
   return str.replace(/\d+(\.\d+)?/g, (num) => {
     const [intPart, decPart] = num.split(".");
     const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -33,9 +33,8 @@ export default function Calculator() {
         .replace(/%/g, "/100");
       expression = expression.replace(/\b0+(\d)/g, "$1");
 
-      if (!expression) return 0; // ถ้า expression ว่างเปล่า
+      if (!expression) return 0;
 
-      // ถ้าตัวสุดท้ายเป็น operator ให้คำนวณตัวก่อนหน้า
       if (/[+\-*/]$/.test(expression)) {
         return eval(expression.slice(0, -1));
       }
@@ -71,140 +70,78 @@ export default function Calculator() {
       });
       setJustCalculated(false);
     } else {
-      // --- Logic สำหรับการพิมพ์ ---
       setInput((prev) => {
         let cleanPrev = unformatNumber(prev);
         let newVal = cleanPrev;
 
-        // Case 1: เพิ่งกด = ไป
         if (justCalculated) {
           setJustCalculated(false);
-          if (/[+\-x÷]/.test(value)) {
-            newVal = cleanPrev + value; // เริ่มการคำนวณใหม่จากผลลัพธ์เดิม
-          } else if (/[0-9]/.test(value)) {
-            newVal = value; // เริ่มต้นใหม่ทั้งหมด
-          } else if (value === '.') {
-             newVal = "0."; // เริ่มต้นใหม่ด้วย 0.
-          } else {
-            newVal = cleanPrev; // ป้องกันการกดปุ่มอื่น
-          }
-        } 
-        
-        // Case 2: พิมพ์ต่อตามปกติ
-        else {
+          if (/[+\-x÷]/.test(value)) newVal = cleanPrev + value;
+          else if (/[0-9]/.test(value)) newVal = value;
+          else if (value === '.') newVal = "0.";
+          else newVal = cleanPrev;
+        } else {
           const replaceableOperators = /[+\-x÷]/;
           const lastChar = cleanPrev.slice(-1);
 
-          // 2.1: ผู้ใช้กดเครื่องหมาย (+, -, x, ÷)
           if (replaceableOperators.test(value)) {
-            if (replaceableOperators.test(lastChar)) {
-              // ถ้าตัวสุดท้ายเป็นเครื่องหมายอยู่แล้ว -> ให้แทนที่
-              newVal = cleanPrev.slice(0, -1) + value;
-            } else {
-              // ถ้าตัวสุดท้ายไม่ใช่เครื่องหมาย -> ให้เพิ่มเข้าไป
-              newVal = cleanPrev + value;
-            }
-          } 
-          
-          // 2.2: ผู้ใช้กดจุด (.)
-          else if (value === '.') {
-            // แบ่ง string ด้วยเครื่องหมาย เพื่อหา "ก้อนตัวเลข" สุดท้าย
+            newVal = replaceableOperators.test(lastChar)
+              ? cleanPrev.slice(0, -1) + value
+              : cleanPrev + value;
+          } else if (value === '.') {
             const segments = cleanPrev.split(replaceableOperators);
             const lastSegment = segments.pop() || "";
-            
-            if (!lastSegment.includes('.')) {
-              // ถ้าก้อนตัวเลขสุดท้ายยังไม่มีจุด -> ให้เพิ่มจุด
-              newVal = cleanPrev + value;
-            }
-            // ถ้ามีจุดอยู่แล้ว ก็ไม่ต้องทำอะไร
-          }
-
-          // 2.3: ผู้ใช้กดตัวเลข
-          else if (/[0-9]/.test(value)) {
-            if (cleanPrev === "0") {
-              newVal = value; // แทนที่ "0" เริ่มต้น
-            } else {
-              newVal = cleanPrev + value; // ต่อตัวเลข
-            }
-          }
-
-          // 2.4: ผู้ใช้กด %
-          else if (value === '%') {
-            // ป้องกันการใส่ % ต่อจากเครื่องหมาย (เช่น 5+%)
+            if (!lastSegment.includes('.')) newVal = cleanPrev + value;
+          } else if (/[0-9]/.test(value)) {
+            newVal = cleanPrev === "0" ? value : cleanPrev + value;
+          } else if (value === '%') {
             if (!replaceableOperators.test(lastChar) && cleanPrev !== "0") {
               newVal = cleanPrev + value;
             }
           }
         }
-        
+
         return formatNumber(newVal);
       });
-      
-      // ถ้าเพิ่งกด = แล้วพิมพ์ตัวเลข/จุด ให้ reset justCalculated
+
       if (justCalculated && (/[0-9]/.test(value) || value === '.')) {
-          setJustCalculated(false);
+        setJustCalculated(false);
       }
     }
   }, [calculate, input, justCalculated]);
 
-  // Effect สำหรับอัปเดต Preview
+  // --- Preview แสดงตลอด ---
   useEffect(() => {
-    if (input && input !== "0") {
-      const clean = unformatNumber(input);
-      let exprToCalc = clean;
+    const clean = unformatNumber(input);
+    if (!clean || clean === "0") {
+      setPreview("");
+      return;
+    }
 
-      if (/[+\-x÷%]$/.test(clean)) {
-        exprToCalc = clean.slice(0, -1);
-      }
-
-      if (exprToCalc === "" || exprToCalc === input) {
-        setPreview("");
-        return;
-      }
-
-      const result = calculate(exprToCalc);
-      if (result !== null && formatNumber(result.toString()) !== input) {
-        setPreview(formatNumber(result.toString()));
-      } else {
-        setPreview("");
-      }
+    const result = calculate(clean);
+    if (result !== null && formatNumber(result.toString()) !== input) {
+      setPreview(formatNumber(result.toString()));
     } else {
       setPreview("");
     }
   }, [input, calculate]);
 
-  // Effect สำหรับ Keyboard Input
+  // --- Keyboard input ---
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key;
-
-      if (/[0-9]/.test(key)) {
-        e.preventDefault();
-        handleClick(key);
-      } else if (key === "*") {
-        e.preventDefault();
-        handleClick("x");
-      } else if (key === "/") {
-        e.preventDefault();
-        handleClick("÷");
-      } else if (/[\+\-\.%]/.test(key)) {
-        e.preventDefault();
-        handleClick(key);
-      } else if (key === "Enter" || key === "=") {
-        e.preventDefault();
-        handleClick("=");
-      } else if (key === "Backspace") {
-        e.preventDefault();
-        handleClick("dl");
-      } else if (key.toLowerCase() === "c") {
-        e.preventDefault();
-        handleClick("C");
-      }
+      if (/[0-9]/.test(key)) { e.preventDefault(); handleClick(key); }
+      else if (key === "*") { e.preventDefault(); handleClick("x"); }
+      else if (key === "/") { e.preventDefault(); handleClick("÷"); }
+      else if (/[\+\-\.%]/.test(key)) { e.preventDefault(); handleClick(key); }
+      else if (key === "Enter" || key === "=") { e.preventDefault(); handleClick("="); }
+      else if (key === "Backspace") { e.preventDefault(); handleClick("dl"); }
+      else if (key.toLowerCase() === "c") { e.preventDefault(); handleClick("C"); }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClick]); // <-- Dependency ที่ถูกต้อง
+  }, [handleClick]);
 
   const buttons = [
     "C", "dl", "%", "÷",
