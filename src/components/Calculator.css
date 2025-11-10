@@ -1,75 +1,140 @@
+/* ครอบทุก element ป้องกันขนาดเปลี่ยน */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Container Calculator */
 .calculator {
-    width: 260px;
-    margin: 0 auto;
-    border-radius: 47px;
-    padding: 20px;
-    background: #000000;
-    /* box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2); */
-  }
-  
-  input {
-    margin-top: 70%;
-    margin-bottom: 5%;
-    height: 50px;
-    width: 225px;
-    color: #ffffff;
-    background-color: #000000;
-    border: none;
-    text-align: right;
-    font-size: 30px;
-    padding-left: 13%;
-  }
-  
-  
-  .buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-  
-  button {
-    font-size: 20px;
-    padding: 10px;
-    border: none;
-    background: #000000;
-    color: white;
-    height: 55px;
-  
-    
-  }
-  
-  button:hover {
-    background: #11111176;
-    color: #cfcfcf;
-    border-radius: 100%;
-  }
-  button.equals {
-    background-color: orange;
-    color: white;
-    border-radius: 100%;
-    grid-column: 4 / 5; /* อยู่คอลัมน์สุดท้าย */
-    grid-row: 5 / 6;    /* อยู่แถวสุดท้าย */
-  }
-  
-  button.equals:hover {
-    background-color: rgb(217, 133, 7);
-    color: white;
-    border-radius: 100%;
-    transform: scale(1.1);
-  }
-  .line {
-    border-top: 0.1px solid #141414; /* เส้นแนวนอน */
-    margin: 10px 0;
-  }
-  .function{
-    color: orange;
-  }
-  .function:hover{
-    color: orange;
-  }
-  .operator{
-    color: orange;
-  }
-  .operator:hover{
-    color: rgb(255, 157, 0);
-  }
+  width: 285px;        /* กว้างตายตัว */
+  height: 500px;       /* สูงตายตัว */
+  margin: 0 auto;
+  border-radius: 47px;
+  padding: 20px;
+  background: #000000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+/* ประวัติการคำนวณ */
+.history {
+  display: flex;
+  flex-direction: column-reverse; /* ล่าสุดด้านบน */
+  height: 60px;                   /* fix สูง */
+  overflow-y: auto;
+  background-color: #000000;
+  margin-bottom: 10px;
+}
+
+.history-item {
+  font-size: 12px;
+  color: #4d4d4d;
+  margin: 2px 0;
+  text-align: right;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Input ตัวเลข */
+input {
+  height: 50px;
+  width: 100%;
+  color: #ffffff;
+  background-color: #000000;
+  border: none;
+  text-align: right;
+  font-size: 30px;
+  padding-left: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+/* Preview ผลลัพธ์ล่วงหน้า */
+.preview {
+  background-color: #000000;
+  font-size: 18px;
+  text-align: right;
+  color: #484848;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.preview:hover {
+  color: #474747;
+}
+
+/* เส้นแบ่ง */
+.line {
+  border-top: 0.1px solid #141414;
+  margin: 10px 0;
+}
+
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  flex-grow: 1;   
+}
+
+button {
+  font-size: 20px;
+  padding: 10px;
+  border: none;
+  border-radius: 100%;
+  background: #141414;
+  color: white;
+  height: 55px;
+  width: 55px;   
+}
+
+button:hover {
+  background: #24242476;
+  color: #cfcfcf;
+  border-radius: 100%;
+  font-size: 18px;
+}
+
+
+button.equals {
+  background-color: orange;
+  color: white;
+  border-radius: 100%;
+  grid-column: 4 / 5;
+  grid-row: 5 / 6;
+}
+
+button.equals:hover {
+  background-color: rgb(217, 133, 7);
+  color: white;
+  transform: scale(0.95);
+}
+
+/* ปุ่มฟังก์ชัน C, dl, %, ↻ */
+.function {
+  color: orange;
+}
+
+.function:hover {
+  color: orange;
+}
+
+/* ปุ่ม operator + - x ÷ */
+.operator {
+  color: orange;
+}
+
+.operator:hover {
+  color: rgb(255, 157, 0);
+}
