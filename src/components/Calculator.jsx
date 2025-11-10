@@ -9,9 +9,21 @@ export default function Calculator() {
   const [preview, setPreview] = useState("");
   const [justCalculated, setJustCalculated] = useState(false);
 
+  // ใส่ comma ให้เลขแต่ละก้อน
+  const formatNumber = (str) => {
+    return str.replace(/\d+(\.\d+)?/g, (num) => {
+      const [intPart, decPart] = num.split(".");
+      const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return decPart ? `${formattedInt}.${decPart}` : formattedInt;
+    });
+  };
+
+  // เอา comma ออกก่อนคำนวณ
+  const unformatNumber = (str) => str.replace(/,/g, "");
+
   const calculate = (expr) => {
     try {
-      let expression = expr
+      let expression = unformatNumber(expr)
         .replace(/x/g, "*")
         .replace(/÷/g, "/")
         .replace(/%/g, "/100");
@@ -26,7 +38,7 @@ export default function Calculator() {
     if (value === "=") {
       const result = calculate(input);
       if (result !== null) {
-        setInput(result.toString());
+        setInput(formatNumber(result.toString()));
         setHistory((prev) => [input, ...prev].slice(0, 2));
       } else {
         alert("Error");
@@ -41,41 +53,43 @@ export default function Calculator() {
       setJustCalculated(false);
     } else if (value === "dl") {
       setInput((prev) => {
-        const newVal = prev.slice(0, -1);
-        return newVal === "" ? "0" : newVal;
+        const newVal = unformatNumber(prev).slice(0, -1);
+        return newVal === "" ? "0" : formatNumber(newVal);
       });
       setJustCalculated(false);
     } else {
       setInput((prev) => {
-        let newVal = prev;
+        let cleanPrev = unformatNumber(prev);
+        let newVal = cleanPrev;
 
         if (justCalculated && /[+\-x÷]/.test(value)) {
           setJustCalculated(false);
-          newVal = prev + value;
+          newVal = cleanPrev + value;
         } else if (justCalculated && /[0-9]/.test(value)) {
           setJustCalculated(false);
           newVal = value;
         } else {
-          if (prev === "0" && /[0-9]/.test(value)) newVal = value;
-          else newVal = prev + value;
+          if (cleanPrev === "0" && /[0-9]/.test(value)) newVal = value;
+          else newVal = cleanPrev + value;
         }
 
-        return newVal;
+        return formatNumber(newVal);
       });
     }
   };
 
   useEffect(() => {
     if (input && input !== "0") {
-      if (/[+\-x÷%]$/.test(input)) {
-        const trimmed = input.slice(0, -1);
+      const clean = unformatNumber(input);
+      if (/[+\-x÷%]$/.test(clean)) {
+        const trimmed = clean.slice(0, -1);
         const result = calculate(trimmed);
-        if (result !== null) setPreview(result.toString());
+        if (result !== null) setPreview(formatNumber(result.toString()));
         else setPreview("");
         return;
       }
-      const result = calculate(input);
-      if (result !== null) setPreview(result.toString());
+      const result = calculate(clean);
+      if (result !== null) setPreview(formatNumber(result.toString()));
       else setPreview("");
     } else {
       setPreview("");
@@ -117,10 +131,7 @@ export default function Calculator() {
       <input type="text" value={input} readOnly />
 
       {preview && (
-        <div
-          className="preview"
-          onClick={() => setInput(preview)}
-        >
+        <div className="preview" onClick={() => setInput(preview)}>
           = {preview}
         </div>
       )}
@@ -135,11 +146,7 @@ export default function Calculator() {
           else btnClass = "number";
 
           return (
-            <button
-              key={btn}
-              className={btnClass}
-              onClick={() => handleClick(btn)}
-            >
+            <button key={btn} className={btnClass} onClick={() => handleClick(btn)}>
               {btn === "dl" ? <FontAwesomeIcon icon={faBackspace} /> : btn}
             </button>
           );
