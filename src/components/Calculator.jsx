@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import "./Calculator.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBackspace } from "@fortawesome/free-solid-svg-icons";
 
 export default function Calculator() {
   const [input, setInput] = useState("0");
   const [history, setHistory] = useState([]);
   const [preview, setPreview] = useState("");
-  const [justCalculated, setJustCalculated] = useState(false); // ✅ เพิ่มสถานะเช็กว่าพึ่งกด "="
+  const [justCalculated, setJustCalculated] = useState(false);
 
   const calculate = (expr) => {
     try {
@@ -31,7 +33,7 @@ export default function Calculator() {
         setInput("0");
       }
       setPreview("");
-      setJustCalculated(true); // ✅ บอกว่าเพิ่งคำนวณเสร็จ
+      setJustCalculated(true);
     } else if (value === "C" || value === "↻") {
       setInput("0");
       setPreview("");
@@ -47,18 +49,13 @@ export default function Calculator() {
       setInput((prev) => {
         let newVal = prev;
 
-        // ✅ ถ้าเพิ่งคำนวณเสร็จ แล้วกดเครื่องหมายต่อ
         if (justCalculated && /[+\-x÷]/.test(value)) {
           setJustCalculated(false);
           newVal = prev + value;
-        }
-        // ✅ ถ้าเพิ่งคำนวณเสร็จ แล้วกดตัวเลข → เริ่มใหม่
-        else if (justCalculated && /[0-9]/.test(value)) {
+        } else if (justCalculated && /[0-9]/.test(value)) {
           setJustCalculated(false);
           newVal = value;
-        }
-        // ✅ กรณีทั่วไป
-        else {
+        } else {
           if (prev === "0" && /[0-9]/.test(value)) newVal = value;
           else newVal = prev + value;
         }
@@ -68,18 +65,15 @@ export default function Calculator() {
     }
   };
 
-  // ✅ คำนวณ preview อัตโนมัติเมื่อ input เปลี่ยน
   useEffect(() => {
     if (input && input !== "0") {
       if (/[+\-x÷%]$/.test(input)) {
-        // ถ้าจบด้วยเครื่องหมาย
         const trimmed = input.slice(0, -1);
         const result = calculate(trimmed);
-        if (result !== null) setPreview(result.toString()); // ✅ แสดงพรีวิวกลับมา
+        if (result !== null) setPreview(result.toString());
         else setPreview("");
         return;
       }
-
       const result = calculate(input);
       if (result !== null) setPreview(result.toString());
       else setPreview("");
@@ -88,7 +82,6 @@ export default function Calculator() {
     }
   }, [input]);
 
-  // ✅ รองรับคีย์บอร์ด
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key;
@@ -120,12 +113,13 @@ export default function Calculator() {
           <div key={i} className="history-item">{h}</div>
         ))}
       </div>
+
       <input type="text" value={input} readOnly />
 
       {preview && (
         <div
           className="preview"
-          onClick={() => setInput(preview)} // ✅ กด preview เพื่อใช้ค่าแทน input
+          onClick={() => setInput(preview)}
         >
           = {preview}
         </div>
@@ -146,7 +140,7 @@ export default function Calculator() {
               className={btnClass}
               onClick={() => handleClick(btn)}
             >
-              {btn}
+              {btn === "dl" ? <FontAwesomeIcon icon={faBackspace} /> : btn}
             </button>
           );
         })}
