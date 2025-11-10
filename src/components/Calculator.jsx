@@ -3,8 +3,9 @@ import "./Calculator.css";
 
 export default function Calculator() {
   const [input, setInput] = useState("0");
-  const [history, setHistory] = useState([]); // เก็บประวัติ 3 ครั้ง
-  const [preview, setPreview] = useState(""); // แสดงผลลัพธ์ล่วงหน้า
+  const [history, setHistory] = useState([]);
+  const [preview, setPreview] = useState("");
+  const [justCalculated, setJustCalculated] = useState(false); // ✅ เพิ่มสถานะเช็กว่าพึ่งกด "="
 
   const calculate = (expr) => {
     try {
@@ -12,7 +13,7 @@ export default function Calculator() {
         .replace(/x/g, "*")
         .replace(/÷/g, "/")
         .replace(/%/g, "/100");
-      expression = expression.replace(/\b0+(\d)/g, "$1"); // ลบเลข 0 หน้า
+      expression = expression.replace(/\b0+(\d)/g, "$1");
       return eval(expression);
     } catch {
       return null;
@@ -30,29 +31,52 @@ export default function Calculator() {
         setInput("0");
       }
       setPreview("");
+      setJustCalculated(true); // ✅ บอกว่าเพิ่งคำนวณเสร็จ
     } else if (value === "C" || value === "↻") {
       setInput("0");
       setPreview("");
       setHistory([]);
+      setJustCalculated(false);
     } else if (value === "dl") {
       setInput((prev) => {
         const newVal = prev.slice(0, -1);
         return newVal === "" ? "0" : newVal;
       });
+      setJustCalculated(false);
     } else {
       setInput((prev) => {
-        if (prev === "0" && /[0-9]/.test(value)) return value;
-        return prev + value;
+        let newVal = prev;
+
+        // ✅ ถ้าเพิ่งคำนวณเสร็จ แล้วกดเครื่องหมายต่อ
+        if (justCalculated && /[+\-x÷]/.test(value)) {
+          setJustCalculated(false);
+          newVal = prev + value;
+        }
+        // ✅ ถ้าเพิ่งคำนวณเสร็จ แล้วกดตัวเลข → เริ่มใหม่
+        else if (justCalculated && /[0-9]/.test(value)) {
+          setJustCalculated(false);
+          newVal = value;
+        }
+        // ✅ กรณีทั่วไป
+        else {
+          if (prev === "0" && /[0-9]/.test(value)) newVal = value;
+          else newVal = prev + value;
+        }
+
+        return newVal;
       });
     }
   };
 
-  // แสดงผลลัพธ์ล่วงหน้า
+  // ✅ คำนวณ preview อัตโนมัติเมื่อ input เปลี่ยน
   useEffect(() => {
     if (input && input !== "0") {
-      // ถ้าลงท้ายด้วย operator ไม่ต้องแสดง preview
       if (/[+\-x÷%]$/.test(input)) {
-        
+        // ถ้าจบด้วยเครื่องหมาย
+        const trimmed = input.slice(0, -1);
+        const result = calculate(trimmed);
+        if (result !== null) setPreview(result.toString()); // ✅ แสดงพรีวิวกลับมา
+        else setPreview("");
         return;
       }
 
@@ -64,7 +88,7 @@ export default function Calculator() {
     }
   }, [input]);
 
-  // Keyboard support
+  // ✅ รองรับคีย์บอร์ด
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key;
@@ -98,14 +122,14 @@ export default function Calculator() {
       </div>
       <input type="text" value={input} readOnly />
 
-      {preview && 
-        <div 
-          className="preview" 
-          onClick={() => setInput(preview)} // กด preview แทน input
+      {preview && (
+        <div
+          className="preview"
+          onClick={() => setInput(preview)} // ✅ กด preview เพื่อใช้ค่าแทน input
         >
           = {preview}
         </div>
-      }
+      )}
 
       <div className="line"></div>
       <div className="buttons">

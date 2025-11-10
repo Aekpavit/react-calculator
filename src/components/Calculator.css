@@ -1,17 +1,15 @@
-/* ครอบทุก element ป้องกันขนาดเปลี่ยน */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* Container Calculator */
 .calculator {
-  width: 285px;        /* กว้างตายตัว */
-  height: 500px;       /* สูงตายตัว */
+  width: 342px;        /* 285 * 1.2 */
+  height: 600px;       /* 500 * 1.2 */
   margin: 0 auto;
-  border-radius: 47px;
-  padding: 20px;
+  border-radius: 56.4px; /* 47 * 1.2 */
+  padding: 24px;         /* 20 * 1.2 */
   background: #000000;
   display: flex;
   flex-direction: column;
@@ -19,20 +17,19 @@
   align-items: stretch;
 }
 
-/* ประวัติการคำนวณ */
 .history {
   display: flex;
-  flex-direction: column-reverse; /* ล่าสุดด้านบน */
-  height: 60px;                   /* fix สูง */
+  flex-direction: column-reverse;
+  height: 72px;          /* 60 * 1.2 */
   overflow-y: auto;
   background-color: #000000;
-  margin-bottom: 10px;
+  margin-bottom: 12px;   /* 10 * 1.2 */
 }
 
 .history-item {
-  font-size: 12px;
+  font-size: 14.4px;     /* 12 * 1.2 */
   color: #4d4d4d;
-  margin: 2px 0;
+  margin: 2.4px 0;       /* 2 * 1.2 */
   text-align: right;
   width: 100%;
   white-space: nowrap;
@@ -40,77 +37,71 @@
   text-overflow: ellipsis;
 }
 
-/* Input ตัวเลข */
 input {
-  height: 50px;
+  height: 60px;          /* 50 * 1.2 */
   width: 100%;
   color: #ffffff;
   background-color: #000000;
   border: none;
   text-align: right;
-  font-size: 30px;
-  padding-left: 10px;
+  font-size: 36px;       /* 30 * 1.2 */
+  padding-left: 12px;    /* 10 * 1.2 */
   white-space: nowrap;
   overflow: hidden;
-  margin-bottom: 5px;
+  margin-bottom: 6px;    /* 5 * 1.2 */
 }
 
-/* Preview ผลลัพธ์ล่วงหน้า */
 .preview {
   background-color: #000000;
-  font-size: 18px;
+  font-size: 21.6px;     /* 18 * 1.2 */
   text-align: right;
   color: #484848;
   width: 100%;
-  height: 40px;
-  padding: 0 10px;
+  height: 48px;          /* 40 * 1.2 */
+  padding: 0 12px;       /* 10 * 1.2 */
   white-space: nowrap;
   text-overflow: ellipsis;
   cursor: pointer;
-  margin-bottom: 5px;
+  margin-bottom: 6px;    /* 5 * 1.2 */
 }
 
 .preview:hover {
   color: #474747;
 }
 
-/* เส้นแบ่ง */
 .line {
-  border-top: 0.1px solid #141414;
-  margin: 10px 0;
+  border-top: 0.12px solid #141414; /* 0.1 * 1.2 */
+  margin: 12px 0;                  /* 10 * 1.2 */
 }
-
 
 .buttons {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  flex-grow: 1;   
+  gap: 12px;          /* 10 * 1.2 */
+  flex-grow: 1;
 }
 
 button {
-  font-size: 20px;
-  padding: 10px;
+  font-size: 24px;    /* 20 * 1.2 */
+  padding: 12px;      /* 10 * 1.2 */
   border: none;
-  border-radius: 100%;
-  background: #141414;
+  border-radius: 120%; 
+  background: #000000;
   color: white;
-  height: 55px;
-  width: 55px;   
+  height: 66px;       /* 55 * 1.2 */
+  width: 66px;        /* 55 * 1.2 */
 }
 
 button:hover {
   background: #24242476;
   color: #cfcfcf;
-  border-radius: 100%;
-  font-size: 18px;
+  border-radius: 120%;
 }
-
 
 button.equals {
   background-color: orange;
   color: white;
-  border-radius: 100%;
+  border-radius: 120%;
   grid-column: 4 / 5;
   grid-row: 5 / 6;
 }
@@ -121,20 +112,20 @@ button.equals:hover {
   transform: scale(0.95);
 }
 
-/* ปุ่มฟังก์ชัน C, dl, %, ↻ */
 .function {
   color: orange;
 }
 
 .function:hover {
   color: orange;
+  font-size: 24px;    /* 20 * 1.2 */
 }
 
-/* ปุ่ม operator + - x ÷ */
 .operator {
   color: orange;
 }
 
 .operator:hover {
   color: rgb(255, 157, 0);
+  font-size: 24px;    /* 20 * 1.2 */
 }
