@@ -5,7 +5,7 @@ import { faBackspace, faSync } from "@fortawesome/free-solid-svg-icons";
 
 // --- Helpers ---
 const formatNumber = (str) => {
-  if (typeof str !== 'string') return "";
+  if (typeof str !== "string") return "";
   return str.replace(/\d+(\.\d+)?/g, (num) => {
     const [intPart, decPart] = num.split(".");
     const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -14,7 +14,7 @@ const formatNumber = (str) => {
 };
 
 const unformatNumber = (str) => {
-  if (typeof str !== 'string') return "";
+  if (typeof str !== "string") return "";
   return str.replace(/,/g, "");
 };
 
@@ -45,72 +45,97 @@ export default function Calculator() {
     }
   }, []);
 
-  const handleClick = useCallback((value) => {
-    if (value === "=") {
-      const result = calculate(input);
-      if (result !== null) {
-        const resultString = result.toString();
-        setInput(formatNumber(resultString));
-        setHistory((prev) => [input, ...prev].slice(0, 2));
-      } else {
-        alert("Error");
-        setInput("0");
+  // ✅ คลิกประวัติแล้ว: เอาค่ามาใส่ input + คำนวณ + ลบ 2 ตัวบนสุด
+  const handleHistoryClick = (rehistory, index) => {
+    setInput(rehistory);
+
+    const result = calculate(rehistory);
+    if (result !== null) {
+      setPreview(formatNumber(result.toString()));
+    }
+
+    // ลบตัวที่คลิก + ตัวบนสุดออก
+    setHistory((prev) => {
+      const newHistory = [...prev];
+      newHistory.splice(index, 1); // ลบตัวที่คลิก
+      if (index !== 0 && newHistory.length > 0) {
+        newHistory.splice(0, 1); // ลบตัวบนสุดอีกตัว
       }
-      setPreview("");
-      setJustCalculated(true);
-    } else if (value === "C" || value === "↻") {
-      setInput("0");
-      setPreview("");
-      setHistory([]);
-      setJustCalculated(false);
-    } else if (value === "dl") {
-      setInput((prev) => {
-        const newVal = unformatNumber(prev).slice(0, -1);
-        return newVal === "" ? "0" : formatNumber(newVal);
-      });
-      setJustCalculated(false);
-    } else {
-      setInput((prev) => {
-        let cleanPrev = unformatNumber(prev);
-        let newVal = cleanPrev;
+      return newHistory;
+    });
 
-        if (justCalculated) {
-          setJustCalculated(false);
-          if (/[+\-x÷]/.test(value)) newVal = cleanPrev + value;
-          else if (/[0-9]/.test(value)) newVal = value;
-          else if (value === '.') newVal = "0.";
-          else newVal = cleanPrev;
+    setJustCalculated(false);
+  };
+
+  const handleClick = useCallback(
+    (value) => {
+      if (value === "=") {
+        const result = calculate(input);
+        if (result !== null) {
+          const resultString = result.toString();
+          setInput(formatNumber(resultString));
+          setHistory((prev) => [input, ...prev].slice(0, 2));
         } else {
-          const replaceableOperators = /[+\-x÷]/;
-          const lastChar = cleanPrev.slice(-1);
+          alert("Error");
+          setInput("0");
+        }
+        setPreview("");
+        setJustCalculated(true);
+      } else if (value === "C" || value === "↻") {
+        setInput("0");
+        setPreview("");
+        setHistory([]);
+        setJustCalculated(false);
+      } else if (value === "dl") {
+        setInput((prev) => {
+          const newVal = unformatNumber(prev).slice(0, -1);
+          return newVal === "" ? "0" : formatNumber(newVal);
+        });
+        setJustCalculated(false);
+      } else {
+        setInput((prev) => {
+          let cleanPrev = unformatNumber(prev);
+          let newVal = cleanPrev;
 
-          if (replaceableOperators.test(value)) {
-            newVal = replaceableOperators.test(lastChar)
-              ? cleanPrev.slice(0, -1) + value
-              : cleanPrev + value;
-          } else if (value === '.') {
-            const segments = cleanPrev.split(replaceableOperators);
-            const lastSegment = segments.pop() || "";
-            if (!lastSegment.includes('.')) newVal = cleanPrev + value;
-          } else if (/[0-9]/.test(value)) {
-            newVal = cleanPrev === "0" ? value : cleanPrev + value;
-          } else if (value === '%') {
-            if (!replaceableOperators.test(lastChar) && cleanPrev !== "0") {
-              newVal = cleanPrev + value;
+          if (justCalculated) {
+            setJustCalculated(false);
+            if (/[+\-x÷]/.test(value)) newVal = cleanPrev + value;
+            else if (/[0-9]/.test(value)) newVal = value;
+            else if (value === ".") newVal = "0.";
+            else newVal = cleanPrev;
+          } else {
+            const replaceableOperators = /[+\-x÷]/;
+            const lastChar = cleanPrev.slice(-1);
+
+            if (replaceableOperators.test(value)) {
+              newVal = replaceableOperators.test(lastChar)
+                ? cleanPrev.slice(0, -1) + value
+                : cleanPrev + value;
+            } else if (value === ".") {
+              const segments = cleanPrev.split(replaceableOperators);
+              const lastSegment = segments.pop() || "";
+              if (!lastSegment.includes(".")) newVal = cleanPrev + value;
+            } else if (/[0-9]/.test(value)) {
+              newVal = cleanPrev === "0" ? value : cleanPrev + value;
+            } else if (value === "%") {
+              if (!replaceableOperators.test(lastChar) && cleanPrev !== "0") {
+                newVal = cleanPrev + value;
+              }
             }
           }
+
+          return formatNumber(newVal);
+        });
+
+        if (justCalculated && (/[0-9]/.test(value) || value === ".")) {
+          setJustCalculated(false);
         }
-
-        return formatNumber(newVal);
-      });
-
-      if (justCalculated && (/[0-9]/.test(value) || value === '.')) {
-        setJustCalculated(false);
       }
-    }
-  }, [calculate, input, justCalculated]);
+    },
+    [calculate, input, justCalculated]
+  );
 
-  // --- Preview แสดงตลอด ---
+  // --- Preview ---
   useEffect(() => {
     const clean = unformatNumber(input);
     if (!clean || clean === "0") {
@@ -130,13 +155,28 @@ export default function Calculator() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key;
-      if (/[0-9]/.test(key)) { e.preventDefault(); handleClick(key); }
-      else if (key === "*") { e.preventDefault(); handleClick("x"); }
-      else if (key === "/") { e.preventDefault(); handleClick("÷"); }
-      else if (/[\+\-\.%]/.test(key)) { e.preventDefault(); handleClick(key); }
-      else if (key === "Enter" || key === "=") { e.preventDefault(); handleClick("="); }
-      else if (key === "Backspace") { e.preventDefault(); handleClick("dl"); }
-      else if (key.toLowerCase() === "c") { e.preventDefault(); handleClick("C"); }
+      if (/[0-9]/.test(key)) {
+        e.preventDefault();
+        handleClick(key);
+      } else if (key === "*") {
+        e.preventDefault();
+        handleClick("x");
+      } else if (key === "/") {
+        e.preventDefault();
+        handleClick("÷");
+      } else if (/[\+\-\.%]/.test(key)) {
+        e.preventDefault();
+        handleClick(key);
+      } else if (key === "Enter" || key === "=") {
+        e.preventDefault();
+        handleClick("=");
+      } else if (key === "Backspace") {
+        e.preventDefault();
+        handleClick("dl");
+      } else if (key.toLowerCase() === "c") {
+        e.preventDefault();
+        handleClick("C");
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -144,33 +184,58 @@ export default function Calculator() {
   }, [handleClick]);
 
   const buttons = [
-    "C", "dl", "%", "÷",
-    "7", "8", "9", "x",
-    "4", "5", "6", "-",
-    "1", "2", "3", "+",
-    "↻", "0", ".", "="
+    "C",
+    "dl",
+    "%",
+    "÷",
+    "7",
+    "8",
+    "9",
+    "x",
+    "4",
+    "5",
+    "6",
+    "-",
+    "1",
+    "2",
+    "3",
+    "+",
+    "↻",
+    "0",
+    ".",
+    "=",
   ];
 
   return (
     <div className="calculator">
       <div className="history">
         {history.map((h, i) => (
-          <div key={i} className="history-item">{h}</div>
+          <div
+            key={i}
+            className="history-item"
+            onClick={() => handleHistoryClick(h, i)} // ✅ คลิกแล้วทำงาน
+          >
+            {h}
+          </div>
         ))}
       </div>
 
       <input type="text" value={input} readOnly />
 
       {preview && (
-        <div className="preview" onClick={() => {
-          setInput(preview);
-          setPreview("");
-        }}>
+        <div
+          className="preview"
+          onClick={() => {
+            setInput(preview);
+            setPreview("");
+          }}
+        >
           = {preview}
         </div>
       )}
 
       <div className="line"></div>
+
       <div className="buttons">
         {buttons.map((btn) => {
           let btnClass = "";
@@ -180,7 +245,11 @@ export default function Calculator() {
           else btnClass = "number";
 
           return (
-            <button key={btn} className={btnClass} onClick={() => handleClick(btn)}>
+            <button
+              key={btn}
+              className={btnClass}
+              onClick={() => handleClick(btn)}
+            >
               {btn === "dl" ? (
                 <FontAwesomeIcon icon={faBackspace} />
               ) : btn === "↻" ? (
