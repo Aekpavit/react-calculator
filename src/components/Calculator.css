@@ -78,7 +78,7 @@ input {
 }
 
 .line {
-  border-top: 0.12px solid #6e6e6e; /* 0.1 * 1.2 */
+  border-top: 0.75px solid #292929; /* 0.1 * 1.2 */
   margin-top: 45px;
   padding-top: 15px;   
   display: block;
